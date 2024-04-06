@@ -1,5 +1,6 @@
 import math
 import time
+from random import uniform
 
 # 목적 함수
 def objective_function(x, y):
