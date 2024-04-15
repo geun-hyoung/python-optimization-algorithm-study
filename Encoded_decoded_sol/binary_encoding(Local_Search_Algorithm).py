@@ -2,6 +2,7 @@ import numpy as np
 import math
 import time
 from random import sample
+import matplotlib.pyplot as plt
 
 # 목적 함수
 def objective_function(x, y):
@@ -54,6 +55,8 @@ def hill_climbing_no_norm(start, bounds_x, bounds_y, x_bits, y_bits, iterations,
 if __name__ == "__main__":
     # 소수점 5번째까지 표현
     digit = 5
+    # 이진수로 변환 후 몇개를 변경할지 ~= alpha
+    alpha = 10
 
     # x, y의 제약 범위
     x_bounds = [-3.0, 12.1]
@@ -67,7 +70,7 @@ if __name__ == "__main__":
     y_bits = math.ceil(math.log2(y_range))
 
     iterations_list = [500, 1000, 1500]
-    step_size = int((x_bits + y_bits)/2)
+    step_size = int((x_bits + y_bits)/3)
 
     # 초기해
     init_binary = ''.join([str(np.random.randint(2)) for _ in range(x_bits + y_bits)])
@@ -77,4 +80,4 @@ if __name__ == "__main__":
 
     for iterations in iterations_list:
         best_x, best_y, best_value, cpu_time = hill_climbing_no_norm(start, x_bounds, y_bounds, x_bits, y_bits, iterations, step_size)
-        print(f"반복 횟수: {iterations}, 최적의 x: {best_x:.5f}, 최적의 y: {best_y:.5f}, 최대값: {best_value:.5f}, CPU 시간: {cpu_time:.4f}초")
+        print(f"반복 횟수: {iterations}, 최적의 x: {best_x:.5f}, 최적의 y: {best_y:.5f}, 최대값: {best_value:.5f}, CPU 시간: {cpu_time:.5f}초")
