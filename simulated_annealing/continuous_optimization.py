@@ -43,13 +43,13 @@ iterations = 1000
 
 # 1번 annealing schedule 2번 변경
 candidate = [
-    [100, 0.99],
+    [1000, 0.99],
     [1000, 0.8],
 ]
 for obj in candidate:
     ch1_temp, ch1_cooling_rate = obj[0], obj[1]
     best_solution, best_cost = simulated_annealing(init_solution, ch1_temp, ch1_cooling_rate, stopping_temp, iterations)
-    print(f"temp: {temp}, cooling_rate = {cooling_rate}, Best solution: {best_solution}, Best cost: {best_cost}")
+    print(f"temp: {ch1_temp}, cooling_rate = {ch1_cooling_rate}, Best solution: {best_solution}, Best cost: {best_cost}")
 
 # 2번 정지 조건 2번 바꾸기
 print('\n')

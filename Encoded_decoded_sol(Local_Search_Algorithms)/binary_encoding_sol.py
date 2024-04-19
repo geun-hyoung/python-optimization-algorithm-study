@@ -2,7 +2,6 @@ import numpy as np
 import math
 import time
 from random import sample
-import matplotlib.pyplot as plt
 
 # 목적 함수
 def objective_function(x, y):
@@ -68,6 +67,7 @@ if __name__ == "__main__":
 
     x_bits = math.ceil(math.log2(x_range))
     y_bits = math.ceil(math.log2(y_range))
+    print(x_bits, y_bits)
 
     iterations_list = [500, 1000, 1500]
     step_size = int((x_bits + y_bits)/3)
