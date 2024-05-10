@@ -1,12 +1,9 @@
 import numpy as np
 
-# 객체 함수
 def object_function(x, y):
     return (4 - 2.1 * x ** 2 + (x ** 4) / 3) * x ** 2 + x * y + (-4 + 4 * y ** 2) * y ** 2
 
-# Particle Swarm Optimization
 def pso_algorithm(x_bounds, y_bounds, num_particles=30, max_iter=100, w=0.5, c1=1.0, c2=1.0):
-    # 입자 초기화, x와 y 두 가지 위치를 랜덤하게 30개 생성
     particle_positions = np.random.rand(num_particles, 2)
     particle_positions[:, 0] = particle_positions[:, 0] * (x_bounds[1] - x_bounds[0]) + x_bounds[0]
     particle_positions[:, 1] = particle_positions[:, 1] * (y_bounds[1] - y_bounds[0]) + y_bounds[0]
@@ -24,17 +21,14 @@ def pso_algorithm(x_bounds, y_bounds, num_particles=30, max_iter=100, w=0.5, c1=
             # 적합도 평가
             fitness = object_function(particle_positions[i, 0], particle_positions[i, 1])
 
-            # pbest 업데이트
             if fitness < pbest_scores[i]:
                 pbest_scores[i] = fitness
                 pbest_positions[i] = particle_positions[i].copy()
 
-            # gbest 업데이트
             if fitness < gbest_score:
                 gbest_score = fitness
                 gbest_position = particle_positions[i].copy()
 
-        # 입자의 속도와 위치 업데이트
         for i in range(num_particles):
             r1, r2 = np.random.rand(2)
             velocity_update = (w * particle_velocities[i] +

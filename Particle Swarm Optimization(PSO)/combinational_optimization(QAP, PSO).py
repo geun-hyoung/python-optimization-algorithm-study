@@ -23,21 +23,22 @@ def extract_distance_and_flow(matrix):
     flow += flow.T
     return distance, flow
 
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
+def softmax(x):
+    e_x = np.exp(x - np.max(x))
+    return e_x / e_x.sum()
 
 def update_velocity(velocity, personal_best_position, global_best_position, position, w=0.5, c1=0.8, c2=0.9):
     r1, r2 = random.random(), random.random()
-    cognitive_component = c1 * r1 * (personal_best_position - position)
-    social_component = c2 * r2 * (global_best_position - position)
-    new_velocity = w * velocity + cognitive_component + social_component
+    component_1 = c1 * r1 * (personal_best_position - position)    # PB
+    component_2 = c2 * r2 * (global_best_position - position)   # GB
+    new_velocity = w * velocity + component_1 + component_2
     return new_velocity
 
 def update_position(position, velocity):
     new_position = position.copy()
     n = len(velocity)
 
-    probabilities = sigmoid(velocity)
+    probabilities = softmax(velocity)
 
     for i in range(n):
         if random.random() < probabilities[i]:
@@ -99,4 +100,4 @@ if __name__ == "__main__":
 
     distance, flow = extract_distance_and_flow(raw_data)
     best_solution, best_cost = pso_for_qap(distance, flow, particle_num, iterations)
-    print(f"최종 배치: {best_solution}, 비용: {best_cost}")
+    print(f"최종 배치: {best_solution}, 비용: {best_cost/2}")
