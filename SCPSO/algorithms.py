@@ -48,7 +48,6 @@ def pso(data, num_clusters, max_iter, num_particles, inertia_weight, c1, c2):
     silhouette_avg = silhouette_score(data, km.labels_)
     return km.labels_, silhouette_avg
 
-
 def initialize_clusters(num_clusters, data):
     num_features = data.shape[1]
     centers = np.zeros((num_clusters, num_features))
