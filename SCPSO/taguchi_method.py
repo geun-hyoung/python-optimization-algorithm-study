@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-
 from sklearn.preprocessing import LabelEncoder
+
 from text_vectorization import spectral_embedding
 from algorithms import pso, ga, SimulatedAnnealing
 
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     random.seed(42)
     k = 15
     max_iter = 100
-    reuters_df = pd.read_csv('./dataset/Input/reuters_dataset.csv', encoding='utf-8')
+    reuters_df = pd.read_csv('./dataset/Input/20newsgroups_dataset.csv', encoding='utf-8')
     le = LabelEncoder()
     true_labels = le.fit_transform(reuters_df['label'])
     Y = spectral_embedding(reuters_df, k)
@@ -101,12 +101,15 @@ if __name__ == "__main__":
 
     # PSO 실험 실행
     pso_results = run_taguchi_experiment('pso', pso_params_grid, Y, k, max_iter, oa)
+    print('pso complete')
 
     # GA 실험 실행
     ga_results = run_taguchi_experiment('ga', ga_params_grid, Y, k, max_iter, oa)
+    print('ga complete')
 
     # SA 실험 실행
     sa_results = run_taguchi_experiment('sa', sa_params_grid, Y, k, max_iter, oa)
+    print('sa complete')
 
     # 결과 저장 및 시각화
     for algorithm_name, results, params_grid in zip(
@@ -128,5 +131,5 @@ if __name__ == "__main__":
                 f.write(f"Params: {result[0]}, Score: {result[1]}\n")
             f.write(f"S/N Ratio: {sn_ratio}\n")
 
-        # 주효과도 시각화 및 저장
+        # 주 효과도 시각화 및 저장
         plot_and_save_sn_ratios(sn_ratios, params_grid, algorithm_name, output_dir)

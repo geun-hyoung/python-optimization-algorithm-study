@@ -74,7 +74,6 @@ def compute_index_terms(cont_mat):
 
     col_sums = np.sum(cont_mat, axis=0)
     n_j = np.sum([compute_comb(col_sum, 2) for col_sum in col_sums])
-
     return n_ij, n_i, n_j
 
 def compute_expected_index(b, c, total_combinations):

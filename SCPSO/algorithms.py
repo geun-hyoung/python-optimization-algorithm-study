@@ -1,9 +1,11 @@
+import torch
 import numpy as np
+import math
 import random
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics import silhouette_score
 from sklearn.cluster import KMeans
-random.seed(42)
+
 class Particle:
     def __init__(self, dimension, num_clusters):
         self.position = np.random.rand(num_clusters, dimension)  # 각 군집 중심점의 위치
@@ -11,13 +13,13 @@ class Particle:
         self.best_position = self.position.copy()
         self.best_fitness = float('inf')
 
-# Fitness function 수정: 클러스터 내 거리의 합 최소화
+# Fitness function : (목적 함수)군집과 중심점 거리의 합 최소화
 def fitness_function(centers, data):
-    distances = np.sqrt(((data[:, np.newaxis, :] - centers) ** 2).sum(axis=2))
-    closest = np.argmin(distances, axis=1)
-    inertia = sum([np.min(distances[i]) for i in range(distances.shape[0])])
-    return inertia
+    distances = euclidean_distances(data, centers)
+    total_distance = sum([np.min(distances[i]) for i in range(distances.shape[0])])
+    return total_distance
 
+# Particle Swarm Optimization main algorithms
 def pso(data, num_clusters, max_iter, num_particles, inertia_weight, c1, c2):
     num_features = data.shape[1]
     particles = [Particle(num_features, num_clusters) for _ in range(num_particles)]
@@ -25,7 +27,7 @@ def pso(data, num_clusters, max_iter, num_particles, inertia_weight, c1, c2):
     global_best_fitness = float('inf')
 
     for _ in range(max_iter):
-        for particle in particles:
+        for particle in particles:    # pbest
             fitness = fitness_function(particle.position, data)
             if fitness < particle.best_fitness:
                 particle.best_fitness = fitness
@@ -34,7 +36,7 @@ def pso(data, num_clusters, max_iter, num_particles, inertia_weight, c1, c2):
                 global_best_fitness = fitness
                 global_best_position = particle.position.copy()
 
-        for particle in particles:
+        for particle in particles:    # gbest
             r1 = np.random.rand(num_clusters, num_features)
             r2 = np.random.rand(num_clusters, num_features)
 
@@ -48,27 +50,14 @@ def pso(data, num_clusters, max_iter, num_particles, inertia_weight, c1, c2):
     silhouette_avg = silhouette_score(data, km.labels_)
     return km.labels_, silhouette_avg
 
-
 def initialize_clusters(num_clusters, data):
-    num_features = data.shape[1]
-    centers = np.zeros((num_clusters, num_features))
-    for i in range(num_features):
-        min_val, max_val = np.min(data[:, i]), np.max(data[:, i])
-        centers[:, i] = np.random.uniform(min_val, max_val, size=num_clusters)
-    return centers
-
-def calculate_intra_cluster_distance(centers, data):
-    distances = euclidean_distances(data, centers)
-    total_distance = sum([np.min(distances[i]) for i in range(distances.shape[0])])
-    return total_distance
+    return np.random.rand(num_clusters, data.shape[1])
 
 def roulette_wheel_selection(population, fitness_scores):
     inverse_fitness = 1.0 / np.array(fitness_scores)
     total_inverse_fitness = np.sum(inverse_fitness)
     selection_probabilities = inverse_fitness / total_inverse_fitness
-    selected_indices = np.random.choice(range(len(population)), size=len(population) // 2, replace=False,
-                                        p=selection_probabilities)
-
+    selected_indices = np.random.choice(range(len(population)), size=len(population) // 2, replace=False, p=selection_probabilities)
     return [population[i] for i in selected_indices]
 
 def crossover(parent1, parent2, crossover_rate):
@@ -88,14 +77,14 @@ def mutation(centers, data, mutation_rate):
     centers[mutation_point] = data[random.randint(0, data.shape[0] - 1)]
     return centers
 
-# 유전 알고리즘 메인 함수
+# Genetic Algorithms Main
 def ga(data, num_clusters, num_generations, population_size, crossover_rate, mutation_rate):
     population = [initialize_clusters(num_clusters, data) for _ in range(population_size)]
     best_solution = None
     best_fitness = float('inf')
 
     for generation in range(num_generations):
-        fitness_scores = [calculate_intra_cluster_distance(clusters, data) for clusters in population]
+        fitness_scores = [fitness_function(clusters, data) for clusters in population]
 
         if min(fitness_scores) < best_fitness:
             best_fitness = min(fitness_scores)
@@ -119,52 +108,74 @@ def ga(data, num_clusters, num_generations, population_size, crossover_rate, mut
     return km.labels_, silhouette_avg
 
 class SimulatedAnnealing:
-    def __init__(self, data, num_clusters, max_iter, initial_temp, cooling_rate, stop_threshold=1):
+    def __init__(self, data, num_clusters, max_iter, initial_temp, cooling_rate, stop_threshold=1e-5):
         self.data = data
         self.num_clusters = num_clusters
         self.temp = initial_temp
         self.cooling_rate = cooling_rate
         self.max_iter = max_iter
         self.num_features = data.shape[1]
-        self.centroids = np.random.rand(num_clusters, self.num_features)
+        self.centroids = self.initialize_centroids()
         self.best_centroids = self.centroids.copy()
         self.best_fitness = self.fitness_function(self.centroids)
         self.stop_threshold = stop_threshold
 
+    def initialize_centroids(self):
+        """Initialize centroids within the range of the data."""
+        return np.random.rand(self.num_clusters, self.data.shape[1])
+
     def fitness_function(self, centers):
-        distances = np.sqrt(((self.data[:, np.newaxis, :] - centers) ** 2).sum(axis=2))
-        closest = np.argmin(distances, axis=1)
-        inertia = sum([np.min(distances[i]) for i in range(distances.shape[0])])
-        return inertia
+        """Calculate the inertia (sum of squared distances) for the given centroids."""
+        distances = euclidean_distances(self.data, centers)
+        total_distance = sum([np.min(distances[i]) for i in range(distances.shape[0])])
+        return total_distance
 
-    def perturb_centroids(self):
-        new_centroids = self.centroids.copy()
+    def get_neighbor(self, centroids, step_size=0.1):
+        """Generate neighbor centroids."""
+        neighbor = centroids + np.random.uniform(-step_size, step_size, centroids.shape)
+        min_vals = np.min(self.data, axis=0)
+        max_vals = np.max(self.data, axis=0)
         for i in range(self.num_clusters):
-            if np.random.rand() < 0.5:
-                new_centroids[i] += np.random.normal(0, 1, self.num_features)
-            else:
-                new_centroids[i] -= np.random.normal(0, 1, self.num_features)
-        return new_centroids
+            neighbor[i] = np.clip(neighbor[i], min_vals, max_vals)
+        return neighbor
 
-    def accept_probability(self, old_fitness, new_fitness):
-        if new_fitness < old_fitness:
-            return 1.0
-        return np.exp((old_fitness - new_fitness) / self.temp)
+    def simulated_annealing(self):
+        """Run the simulated annealing algorithm."""
+        current_solution = self.centroids
+        current_cost = self.fitness_function(current_solution)
+        iterations = 1
+
+        while self.temp > self.stop_threshold and iterations < self.max_iter:
+            neighbor = self.get_neighbor(current_solution)
+            neighbor_cost = self.fitness_function(neighbor)
+
+            cost_difference = neighbor_cost - current_cost
+
+            # Improving move + Non-improving move
+            if cost_difference < 0 or math.exp(-cost_difference / self.temp) > random.random():
+                current_solution = neighbor
+                current_cost = neighbor_cost
+
+                if current_cost < self.best_fitness:
+                    self.best_fitness = current_cost
+                    self.best_centroids = current_solution
+
+            self.temp *= self.cooling_rate
+            iterations += 1
+
+        return self.best_centroids
 
     def run(self):
-        for _ in range(self.max_iter):
-            new_centroids = self.perturb_centroids()
-            new_fitness = self.fitness_function(new_centroids)
-            if self.accept_probability(self.best_fitness, new_fitness) > np.random.rand():
-                self.centroids = new_centroids
-                if new_fitness < self.best_fitness:
-                    if abs(self.best_fitness - new_fitness) < self.stop_threshold:
-                        break
-                    self.best_fitness = new_fitness
-                    self.best_centroids = new_centroids
-            self.temp *= self.cooling_rate
+        """Run simulated annealing and return the labels and silhouette score."""
+        best_centroids = self.simulated_annealing()
+        kmeans = KMeans(n_clusters=self.num_clusters, init=best_centroids, n_init=1)
+        kmeans.fit(self.data)
+        silhouette_avg = silhouette_score(self.data, kmeans.labels_)
+        return kmeans.labels_, silhouette_avg
 
-        km = KMeans(n_clusters=self.num_clusters, init=self.best_centroids, n_init=1)
-        km.fit(self.data)
-        silhouette_avg = silhouette_score(self.data, km.labels_)
-        return km.labels_, silhouette_avg
+
+def sk_means(data, num_clusters):
+    km = KMeans(n_clusters=num_clusters, random_state=42)
+    km.fit(data)
+    silhouette_avg = silhouette_score(data, km.labels_)
+    return km.labels_, silhouette_avg

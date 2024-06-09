@@ -139,5 +139,5 @@ dmypy.json
 cython_debug/
 
 # priviate
-SCPSO/dataset/Input
-SCPSO/dataset/Output
+SCPSO/dataset/Input/
+SCPSO/dataset/Output/
