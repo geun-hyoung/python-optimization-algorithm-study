@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import itertools
 
 import statsmodels.api as sm
 from sklearn.preprocessing import LabelEncoder
@@ -28,17 +29,15 @@ def calculate_sn_ratio_minimization(scores):
     sn_ratio = -10 * np.log10(sum_of_squares / n)
     return sn_ratio
 
-def generate_orthogonal_array(num_experiments, num_factors, levels):
-    if levels ** num_factors < num_experiments:
-        raise ValueError("The number of experiments is too large for the given number of factors and levels.")
-    oa = sm.stats.oa.oa_design(8, 4)
-    num_required_rows = min(len(oa), num_experiments)
-    return oa[:num_required_rows]
+def create_random_combinations(params_grid, num_samples):
+    all_combinations = list(itertools.product(*params_grid.values()))
+    random_combinations = random.sample(all_combinations, num_samples)
+    return random_combinations
 
-def run_taguchi_experiment(algorithm, params_grid, data, k, max_iter, oa):
+def run_taguchi_experiment(algorithm, params_grid, data, k, max_iter, random_combinations):
     results = []
-    for i, row in enumerate(oa):
-        params = {key: params_grid[key][row[j] - 1] for j, key in enumerate(params_grid.keys())}
+    for combination in random_combinations:
+        params = {key: combination[i] for i, key in enumerate(params_grid.keys())}
         score = run_experiment(algorithm, params, data, k, max_iter)
         results.append((params, score))
     return results
@@ -67,9 +66,6 @@ if __name__ == "__main__":
     Y = spectral_embedding(reuters_df, k)
 
     num_experiments = 10
-    num_factors = 4
-    levels = 3
-    oa = generate_orthogonal_array(num_experiments, num_factors, levels)
 
     output_dir = './dataset/Output/'
     if not os.path.exists(output_dir):
@@ -95,16 +91,21 @@ if __name__ == "__main__":
         'cooling_rate': [0.85, 0.9, 0.95]
     }
 
+    # 무작위 조합 생성
+    pso_random_combinations = create_random_combinations(pso_params_grid, num_experiments)
+    ga_random_combinations = create_random_combinations(ga_params_grid, num_experiments)
+    sa_random_combinations = create_random_combinations(sa_params_grid, num_experiments)
+
     # PSO 실험 실행
-    pso_results = run_taguchi_experiment('pso', pso_params_grid, Y, k, max_iter, oa)
+    pso_results = run_taguchi_experiment('pso', pso_params_grid, Y, k, max_iter, pso_random_combinations)
     print('pso complete')
 
     # GA 실험 실행
-    ga_results = run_taguchi_experiment('ga', ga_params_grid, Y, k, max_iter, oa)
+    ga_results = run_taguchi_experiment('ga', ga_params_grid, Y, k, max_iter, ga_random_combinations)
     print('ga complete')
 
     # SA 실험 실행
-    sa_results = run_taguchi_experiment('sa', sa_params_grid, Y, k, max_iter, oa)
+    sa_results = run_taguchi_experiment('sa', sa_params_grid, Y, k, max_iter, sa_random_combinations)
     print('sa complete')
 
     # 결과 저장 및 시각화
