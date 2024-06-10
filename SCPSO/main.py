@@ -7,7 +7,7 @@ from measure_metrics import evaluate_algorithms
 from algorithms import pso, ga, SimulatedAnnealing, sk_means
 
 if __name__ == "__main__":
-    # global params
+    # global param
     k = 15    # number_of_clusters
     max_iter = 100 # algorithms_iterations
 
