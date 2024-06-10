@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import itertools
 
 import statsmodels.api as sm
 from sklearn.preprocessing import LabelEncoder
@@ -28,17 +29,15 @@ def calculate_sn_ratio_minimization(scores):
     sn_ratio = -10 * np.log10(sum_of_squares / n)
     return sn_ratio
 
-def generate_orthogonal_array(num_experiments, num_factors, levels):
-    if levels ** num_factors < num_experiments:
-        raise ValueError("The number of experiments is too large for the given number of factors and levels.")
-    oa = sm.stats.oa.oa_design(8, 4)
-    num_required_rows = min(len(oa), num_experiments)
-    return oa[:num_required_rows]
+def create_random_combinations(params_grid, num_samples):
+    all_combinations = list(itertools.product(*params_grid.values()))
+    random_combinations = random.sample(all_combinations, num_samples)
+    return random_combinations
 
-def run_taguchi_experiment(algorithm, params_grid, data, k, max_iter, oa):
+def run_taguchi_experiment(algorithm, params_grid, data, k, max_iter, random_combinations):
     results = []
-    for i, row in enumerate(oa):
-        params = {key: params_grid[key][row[j] - 1] for j, key in enumerate(params_grid.keys())}
+    for combination in random_combinations:
+        params = {key: combination[i] for i, key in enumerate(params_grid.keys())}
         score = run_experiment(algorithm, params, data, k, max_iter)
         results.append((params, score))
     return results
@@ -61,21 +60,19 @@ if __name__ == "__main__":
     random.seed(42)
     k = 15
     max_iter = 100
-    reuters_df = pd.read_csv('./dataset/Input/20newsgroups_dataset.csv', encoding='utf-8')
-    le = LabelEncoder()
-    true_labels = le.fit_transform(reuters_df['label'])
-    Y = spectral_embedding(reuters_df, k)
+
+    dataset_paths = [
+        './dataset/Input/20newsgroups_dataset1.csv',
+        './dataset/Input/reuters.csv',
+        './dataset/Input/dbpedia_dataset.csv'
+    ]
 
     num_experiments = 10
-    num_factors = 4
-    levels = 3
-    oa = generate_orthogonal_array(num_experiments, num_factors, levels)
 
-    output_dir = './dataset/Output/'
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    output_base_dir = './dataset/Output/'
+    if not os.path.exists(output_base_dir):
+        os.makedirs(output_base_dir)
 
-    # PSO 인자 및 수준 정의
     pso_params_grid = {
         'num_particles': [20, 30, 40],
         'inertia_weight': [0.5, 0.7, 0.9],
@@ -91,41 +88,57 @@ if __name__ == "__main__":
     }
 
     sa_params_grid = {
-        'initial_temp': [100, 500, 1000],
-        'cooling_rate': [0.85, 0.9, 0.95]
+        'initial_temp': [100, 250, 750, 1000],
+        'cooling_rate': [0.85, 0.9, 0.95, 0.99]
     }
 
-    # PSO 실험 실행
-    pso_results = run_taguchi_experiment('pso', pso_params_grid, Y, k, max_iter, oa)
-    print('pso complete')
+    for dataset_path in dataset_paths:
+        print(f'Processing dataset: {dataset_path}')
 
-    # GA 실험 실행
-    ga_results = run_taguchi_experiment('ga', ga_params_grid, Y, k, max_iter, oa)
-    print('ga complete')
+        df = pd.read_csv(dataset_path, encoding='utf-8')
+        le = LabelEncoder()
+        true_labels = le.fit_transform(df['label'])
+        Y = spectral_embedding(df, k)
 
-    # SA 실험 실행
-    sa_results = run_taguchi_experiment('sa', sa_params_grid, Y, k, max_iter, oa)
-    print('sa complete')
+        dataset_name = os.path.basename(dataset_path).split('.')[0]
+        output_dir = os.path.join(output_base_dir, dataset_name)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
-    # 결과 저장 및 시각화
-    for algorithm_name, results, params_grid in zip(
-            ['pso', 'ga', 'sa'], [pso_results, ga_results, sa_results],
-            [pso_params_grid, ga_params_grid, sa_params_grid]
-    ):
-        scores = [result[1] for result in results]
-        sn_ratio = calculate_sn_ratio_minimization(scores)
+        pso_random_combinations = create_random_combinations(pso_params_grid, num_experiments)
+        ga_random_combinations = create_random_combinations(ga_params_grid, num_experiments)
+        sa_random_combinations = create_random_combinations(sa_params_grid, num_experiments)
 
-        sn_ratios = {key: [] for key in params_grid.keys()}
-        for key in params_grid.keys():
-            for level in params_grid[key]:
-                filtered_scores = [result[1] for result in results if result[0][key] == level]
-                sn_ratios[key].append(calculate_sn_ratio_minimization(filtered_scores))
+        print('Running PSO experiment...')
+        pso_results = run_taguchi_experiment('pso', pso_params_grid, Y, k, max_iter, pso_random_combinations)
+        print('PSO complete')
 
-        # 결과 출력 및 저장
-        with open(os.path.join(output_dir, f'{algorithm_name}_results.txt'), 'w') as f:
-            for result in results:
-                f.write(f"Params: {result[0]}, Score: {result[1]}\n")
-            f.write(f"S/N Ratio: {sn_ratio}\n")
+        print('Running GA experiment...')
+        ga_results = run_taguchi_experiment('ga', ga_params_grid, Y, k, max_iter, ga_random_combinations)
+        print('GA complete')
 
-        # 주 효과도 시각화 및 저장
-        plot_and_save_sn_ratios(sn_ratios, params_grid, algorithm_name, output_dir)
+        print('Running SA experiment...')
+        sa_results = run_taguchi_experiment('sa', sa_params_grid, Y, k, max_iter, sa_random_combinations)
+        print('SA complete')
+
+        for algorithm_name, results, params_grid in zip(
+                ['pso', 'ga', 'sa'], [pso_results, ga_results, sa_results],
+                [pso_params_grid, ga_params_grid, sa_params_grid]
+        ):
+            scores = [result[1] for result in results]
+            sn_ratio = calculate_sn_ratio_minimization(scores)
+
+            sn_ratios = {key: [] for key in params_grid.keys()}
+            for key in params_grid.keys():
+                for level in params_grid[key]:
+                    filtered_scores = [result[1] for result in results if result[0][key] == level]
+                    sn_ratios[key].append(calculate_sn_ratio_minimization(filtered_scores))
+
+            with open(os.path.join(output_dir, f'{algorithm_name}_results.txt'), 'w') as f:
+                for result in results:
+                    f.write(f"Params: {result[0]}, Score: {result[1]}\n")
+                f.write(f"S/N Ratio: {sn_ratio}\n")
+
+            plot_and_save_sn_ratios(sn_ratios, params_grid, algorithm_name, output_dir)
+
+        print(f'Finished processing dataset: {dataset_path}')

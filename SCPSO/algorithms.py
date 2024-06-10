@@ -107,6 +107,7 @@ def ga(data, num_clusters, num_generations, population_size, crossover_rate, mut
     silhouette_avg = silhouette_score(data, km.labels_)
     return km.labels_, silhouette_avg
 
+# SimulatedAnnealing(SA) Algorithms Main
 class SimulatedAnnealing:
     def __init__(self, data, num_clusters, max_iter, initial_temp, cooling_rate, stop_threshold=1e-5):
         self.data = data
@@ -121,17 +122,14 @@ class SimulatedAnnealing:
         self.stop_threshold = stop_threshold
 
     def initialize_centroids(self):
-        """Initialize centroids within the range of the data."""
         return np.random.rand(self.num_clusters, self.data.shape[1])
 
     def fitness_function(self, centers):
-        """Calculate the inertia (sum of squared distances) for the given centroids."""
         distances = euclidean_distances(self.data, centers)
         total_distance = sum([np.min(distances[i]) for i in range(distances.shape[0])])
         return total_distance
 
     def get_neighbor(self, centroids, step_size=0.1):
-        """Generate neighbor centroids."""
         neighbor = centroids + np.random.uniform(-step_size, step_size, centroids.shape)
         min_vals = np.min(self.data, axis=0)
         max_vals = np.max(self.data, axis=0)
@@ -140,7 +138,6 @@ class SimulatedAnnealing:
         return neighbor
 
     def simulated_annealing(self):
-        """Run the simulated annealing algorithm."""
         current_solution = self.centroids
         current_cost = self.fitness_function(current_solution)
         iterations = 1
@@ -173,7 +170,7 @@ class SimulatedAnnealing:
         silhouette_avg = silhouette_score(self.data, kmeans.labels_)
         return kmeans.labels_, silhouette_avg
 
-
+# kmeans = sc_means, 다른 메타 휴리스틱 알고리즘과 비교
 def sk_means(data, num_clusters):
     km = KMeans(n_clusters=num_clusters, random_state=42)
     km.fit(data)
