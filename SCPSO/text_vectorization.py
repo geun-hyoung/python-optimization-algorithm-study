@@ -52,7 +52,7 @@ def construct_matrix_Y(V):
     return V / np.linalg.norm(V, axis=1, keepdims=True)
 
 def spectral_embedding(D, k):
-    tf_idf_vector = TfidfVectorizer(ngram_range=(1, 1), tokenizer=simple_tokenizer)
+    tf_idf_vector = TfidfVectorizer(ngram_range=(1, 1), tokenizer=simple_tokenizer, max_features= 20000, norm='l2')
     transformed_vector = tf_idf_vector.fit_transform(D['text'])
     print("DTM 크기:", transformed_vector.shape)
 

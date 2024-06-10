@@ -4,7 +4,7 @@ import numpy as np
 warnings.filterwarnings('ignore')
 
 from scipy.special import comb
-from scipy.stats import entropy
+from scipy.stats import entropy, t
 from sklearn.metrics.cluster import contingency_matrix
 
 def calculate_accuracy(true_labels, predicted_labels):
@@ -30,7 +30,6 @@ def calculate_accuracy(true_labels, predicted_labels):
                 FN += 1
 
     # Accuracy calculation
-    print("TP",TP, "TN", TN, "FP", FP, "FN", FN)
     accuracy = (TP + TN) / (TP + TN + FP + FN)
     return accuracy
 
@@ -82,7 +81,6 @@ def compute_expected_index(b, c, total_combinations):
 def compute_ari(true_labels, cluster_labels):
     """ARI (Adjusted Rand Index)를 계산합니다."""
     cont_mat = contingency_matrix(true_labels, cluster_labels)
-    print(cont_mat)
     total_samples = np.sum(cont_mat)
 
     n_ij, n_i, n_j = compute_index_terms(cont_mat)

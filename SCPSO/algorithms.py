@@ -109,7 +109,7 @@ def ga(data, num_clusters, num_generations, population_size, crossover_rate, mut
 
 # SimulatedAnnealing(SA) Algorithms Main
 class SimulatedAnnealing:
-    def __init__(self, data, num_clusters, max_iter, initial_temp, cooling_rate, stop_threshold=1e-5):
+    def __init__(self, data, num_clusters, max_iter, initial_temp, cooling_rate, step_size, stop_threshold=1e-5):
         self.data = data
         self.num_clusters = num_clusters
         self.temp = initial_temp
@@ -120,6 +120,7 @@ class SimulatedAnnealing:
         self.best_centroids = self.centroids.copy()
         self.best_fitness = self.fitness_function(self.centroids)
         self.stop_threshold = stop_threshold
+        self.step_size = step_size
 
     def initialize_centroids(self):
         return np.random.rand(self.num_clusters, self.data.shape[1])
@@ -129,8 +130,8 @@ class SimulatedAnnealing:
         total_distance = sum([np.min(distances[i]) for i in range(distances.shape[0])])
         return total_distance
 
-    def get_neighbor(self, centroids, step_size=0.1):
-        neighbor = centroids + np.random.uniform(-step_size, step_size, centroids.shape)
+    def get_neighbor(self, centroids, step_size=0.01):
+        neighbor = centroids + np.random.uniform(-self.step_size, self.step_size, centroids.shape)
         min_vals = np.min(self.data, axis=0)
         max_vals = np.max(self.data, axis=0)
         for i in range(self.num_clusters):
@@ -163,7 +164,6 @@ class SimulatedAnnealing:
         return self.best_centroids
 
     def run(self):
-        """Run simulated annealing and return the labels and silhouette score."""
         best_centroids = self.simulated_annealing()
         kmeans = KMeans(n_clusters=self.num_clusters, init=best_centroids, n_init=1)
         kmeans.fit(self.data)
@@ -172,7 +172,7 @@ class SimulatedAnnealing:
 
 # kmeans = sc_means, 다른 메타 휴리스틱 알고리즘과 비교
 def sk_means(data, num_clusters):
-    km = KMeans(n_clusters=num_clusters, random_state=42)
+    km = KMeans(n_clusters=num_clusters)
     km.fit(data)
     silhouette_avg = silhouette_score(data, km.labels_)
     return km.labels_, silhouette_avg

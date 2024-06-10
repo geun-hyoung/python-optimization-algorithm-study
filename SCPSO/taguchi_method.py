@@ -15,7 +15,7 @@ def run_experiment(algorithm, params, data, k, max_iter=100):
     if algorithm == 'pso':
         labels, score = pso(data, k, max_iter, **params)
     elif algorithm == 'ga':
-        labels, score = ga(data, k, **params)
+        labels, score = ga(data, k, max_iter, **params)
     elif algorithm == 'sa':
         sa = SimulatedAnnealing(data, k, max_iter, **params)
         labels, score = sa.run()
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     dataset_paths = [
         './dataset/Input/20newsgroups_dataset1.csv',
-        './dataset/Input/reuters.csv',
+        './dataset/Input/reuters_dataset.csv',
         './dataset/Input/dbpedia_dataset.csv'
     ]
 
@@ -74,22 +74,22 @@ if __name__ == "__main__":
         os.makedirs(output_base_dir)
 
     pso_params_grid = {
-        'num_particles': [20, 30, 40],
-        'inertia_weight': [0.5, 0.7, 0.9],
-        'c1': [1, 1.5, 2],
-        'c2': [1, 1.5, 2]
+        'num_particles': [50, 100, 150],
+        'inertia_weight': [0.6, 0.8, 1.0],
+        'c1': [1.5, 2.0, 2.5],
+        'c2': [1.5, 2.0, 2.5]
     }
 
     ga_params_grid = {
-        'population_size': [50, 100, 150],
-        'num_generations': [50, 100, 150],
-        'crossover_rate': [0.5, 0.6, 0.7],
-        'mutation_rate': [0.1, 0.15, 0.2]
+        'population_size': [100, 150, 200],
+        'crossover_rate': [0.6, 0.7, 0.8],
+        'mutation_rate': [0.05, 0.1, 0.15]
     }
 
     sa_params_grid = {
-        'initial_temp': [100, 250, 750, 1000],
-        'cooling_rate': [0.85, 0.9, 0.95, 0.99]
+        'initial_temp': [100, 500, 1000],
+        'cooling_rate': [0.9, 0.95, 0.99],
+        'step_size': [0.01, 0.05, 0.1]
     }
 
     for dataset_path in dataset_paths:
@@ -141,4 +141,4 @@ if __name__ == "__main__":
 
             plot_and_save_sn_ratios(sn_ratios, params_grid, algorithm_name, output_dir)
 
-        print(f'Finished processing dataset: {dataset_path}')
+        print(f'Finished dataset: {dataset_path}')
