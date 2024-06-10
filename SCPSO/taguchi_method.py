@@ -141,4 +141,4 @@ if __name__ == "__main__":
 
             plot_and_save_sn_ratios(sn_ratios, params_grid, algorithm_name, output_dir)
 
-        print(f'Finished processing dataset: {dataset_path}')
+        print(f'Finished dataset: {dataset_path}')
