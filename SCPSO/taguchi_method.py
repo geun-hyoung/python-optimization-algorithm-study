@@ -3,12 +3,12 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+
+import statsmodels.api as sm
 from sklearn.preprocessing import LabelEncoder
 
 from text_vectorization import spectral_embedding
 from algorithms import pso, ga, SimulatedAnnealing
-
-from scipy.stats.qmc import LatinHypercube, scale
 
 def run_experiment(algorithm, params, data, k, max_iter=100):
     if algorithm == 'pso':
@@ -22,20 +22,18 @@ def run_experiment(algorithm, params, data, k, max_iter=100):
         raise ValueError("Unsupported algorithm")
     return score
 
-
 def calculate_sn_ratio_minimization(scores):
     n = len(scores)
     sum_of_squares = np.sum(np.array(scores) ** 2)
     sn_ratio = -10 * np.log10(sum_of_squares / n)
     return sn_ratio
 
-
 def generate_orthogonal_array(num_experiments, num_factors, levels):
-    sampler = LatinHypercube(d=num_factors)
-    sample = sampler.random(n=num_experiments)
-    scaled_sample = scale(sample, l_bounds=[1] * num_factors, u_bounds=[levels] * num_factors)
-    return np.round(scaled_sample).astype(int)
-
+    if levels ** num_factors < num_experiments:
+        raise ValueError("The number of experiments is too large for the given number of factors and levels.")
+    oa = sm.stats.oa.oa_design(8, 4)
+    num_required_rows = min(len(oa), num_experiments)
+    return oa[:num_required_rows]
 
 def run_taguchi_experiment(algorithm, params_grid, data, k, max_iter, oa):
     results = []
@@ -44,7 +42,6 @@ def run_taguchi_experiment(algorithm, params_grid, data, k, max_iter, oa):
         score = run_experiment(algorithm, params, data, k, max_iter)
         results.append((params, score))
     return results
-
 
 def plot_and_save_sn_ratios(sn_ratios, params_grid, algorithm_name, output_dir):
     fig, axs = plt.subplots(2, 2, figsize=(12, 10))
@@ -59,7 +56,6 @@ def plot_and_save_sn_ratios(sn_ratios, params_grid, algorithm_name, output_dir):
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, f'{algorithm_name}_sn_ratio_plot.png'))
     plt.close()
-
 
 if __name__ == "__main__":
     random.seed(42)
