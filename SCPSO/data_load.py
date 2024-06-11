@@ -28,7 +28,7 @@ for i in range(len(train_labels)):
         docs_train.append(train_data[i])
         docs_labels.append(train_labels[i])
 
-df_reuters = pd.DataFrame({'text': docs_train, 'label': docs_labels})
+df_reuters = pd.DataFrame({'text': docs_train[:100], 'label': docs_labels[:100]})
 df_reuters['label'] = df_reuters['label'].apply(lambda x: x[0])
 df_reuters.to_csv('./dataset/Input/reuters_dataset.csv', index=False, encoding='utf-8')
 

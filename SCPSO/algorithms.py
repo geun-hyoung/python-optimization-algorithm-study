@@ -48,7 +48,7 @@ def pso(data, num_clusters, max_iter, num_particles, inertia_weight, c1, c2):
     km = KMeans(n_clusters=num_clusters, init=global_best_position, n_init=1)
     km.fit(data)
     silhouette_avg = silhouette_score(data, km.labels_)
-    return km.labels_, silhouette_avg
+    return km.labels_, silhouette_avg, particle.best_fitness
 
 def initialize_clusters(num_clusters, data):
     return np.random.rand(num_clusters, data.shape[1])
@@ -105,7 +105,7 @@ def ga(data, num_clusters, num_generations, population_size, crossover_rate, mut
     km = KMeans(n_clusters=num_clusters, init=best_solution, n_init=1)
     km.fit(data)
     silhouette_avg = silhouette_score(data, km.labels_)
-    return km.labels_, silhouette_avg
+    return km.labels_, silhouette_avg, best_fitness
 
 # SimulatedAnnealing(SA) Algorithms Main
 class SimulatedAnnealing:
@@ -168,11 +168,12 @@ class SimulatedAnnealing:
         kmeans = KMeans(n_clusters=self.num_clusters, init=best_centroids, n_init=1)
         kmeans.fit(self.data)
         silhouette_avg = silhouette_score(self.data, kmeans.labels_)
-        return kmeans.labels_, silhouette_avg
+        return kmeans.labels_, silhouette_avg, self.best_fitness
 
 # kmeans = sc_means, 다른 메타 휴리스틱 알고리즘과 비교
 def sk_means(data, num_clusters):
     km = KMeans(n_clusters=num_clusters)
     km.fit(data)
     silhouette_avg = silhouette_score(data, km.labels_)
-    return km.labels_, silhouette_avg
+
+    return km.labels_, silhouette_avg, 0    # rpd 값 비교에서 제거
