@@ -26,12 +26,12 @@ if __name__ == "__main__":
     cooling_rate = 0.85
     step_size = 0.01
 
-    reuters_df = pd.read_csv('./dataset/Input/reuters_dataset.csv', encoding='utf-8')
+    df = pd.read_csv('./dataset/Input/reuters_dataset.csv', encoding='utf-8')
     le = LabelEncoder()
-    true_labels = le.fit_transform(reuters_df['label'])
+    true_labels = le.fit_transform(df['label'])
 
     # spectral embedding
-    Y = spectral_embedding(reuters_df, k)
+    Y = spectral_embedding(df, k)
 
     num_repeats = 10
     metrics = ['Accuracy', 'NMI', 'ARI']
