@@ -105,7 +105,7 @@ def ga(data, num_clusters, num_generations, population_size, crossover_rate, mut
     km = KMeans(n_clusters=num_clusters, init=best_solution, n_init=1)
     km.fit(data)
     silhouette_avg = silhouette_score(data, km.labels_)
-    return km.labels_, silhouette_avg, best_fitness
+    return km.labels_, silhouette_avg, np.sum(fitness_scores)
 
 # SimulatedAnnealing(SA) Algorithms Main
 class SimulatedAnnealing:

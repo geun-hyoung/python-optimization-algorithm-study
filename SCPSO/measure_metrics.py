@@ -86,7 +86,7 @@ def compute_ari(true_labels, cluster_labels):
     n_ij, n_i, n_j = compute_index_terms(cont_mat)
 
     expected_index = (n_i * n_j) / compute_comb(total_samples, 2)
-    ari = (n_ij - expected_index) / ((0.5 * (n_i)) - expected_index)
+    ari = (n_ij - expected_index) / ((0.5 * (n_i + n_j)) - expected_index)
     return ari
 
 def evaluate_algorithms(true_labels, cluster_labels):

@@ -12,22 +12,22 @@ if __name__ == "__main__":
     max_iter = 100  # algorithms_iterations
 
     # pso params
-    num_particles = 30
-    inertia_weight = 0.5
-    c1 = 1
-    c2 = 1
+    num_particles = 150
+    inertia_weight = 1.0
+    c1 = 2.0
+    c2 = 1.0
 
     # ga params
-    population_size = 100
-    crossover_rate = 0.5
-    mutation_rate = 0.1
+    population_size = 200
+    crossover_rate = 0.6
+    mutation_rate = 0.15
 
     # aco params
-    initial_temp = 1000
-    cooling_rate = 0.85
-    step_size = 0.01
+    initial_temp = 100
+    cooling_rate = 0.9
+    step_size = 0.1
 
-    df = pd.read_csv('./dataset/Input/20newsgroups_dataset.csv', encoding='utf-8')
+    df = pd.read_csv('./dataset/Input/dbpedia_dataset.csv', encoding='utf-8')
     le = LabelEncoder()
     true_labels = le.fit_transform(df['label'])
 
@@ -59,7 +59,7 @@ if __name__ == "__main__":
             # 각 평가지표별로 결과를 저장
             results['Accuracy'] = results['Accuracy']._append({'Iteration': i + 1, algorithm.upper(): accuracy}, ignore_index=True)
             results['NMI'] = results['NMI']._append({'Iteration': i + 1, algorithm.upper(): nmi}, ignore_index=True)
-            results['ARI'] = results['ARI']._append({'Iteration': i + 1, algorithm.upper(): ari}, ignore_index=True)
+            results['ARI'] = results['ARI']._append({'Iteration': i + 1, algorithm.upper(): scores}, ignore_index=True)
 
             # 최적의 fitness 값 업데이트 및 저장
             fitness_dict[algorithm].append(fitness)
